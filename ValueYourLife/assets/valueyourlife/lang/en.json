@@ -1,0 +1,23 @@
+{
+    "valueyourlife:hello": "Greetings from ValueYourLife!",
+    "valueyourlife:respawn-success-tokens": "Respawned! 1 token deducted. Tokens remaining: {1}",
+    "valueyourlife:respawn-failed-tokens": "Cannot respawn! Need 1 token, but you have {1}",
+    "valueyourlife:buy-success": "Bought {0} respawn tokens for {1} rusty gears. Tokens: {2}",
+    "valueyourlife:buy-failed": "Not enough gears! Need {0}, have {1}",
+    "valueyourlife:buyall-failed": "Not enough gears for even 1 token! Need {0}, have {1}",
+    "valueyourlife:trade-success": "Traded {0} temporal gears for {1} respawn tokens. Tokens: {2}",
+    "valueyourlife:trade-failed": "Not enough temporal gears! Need {0}, have {1}",
+    "valueyourlife:tradeall-success": "Traded {0} temporal gears for {1} respawn tokens. Tokens: {2}",
+    "valueyourlife:tradeall-failed": "You have no temporal gears to trade!",
+    "valueyourlife:transfer-self": "You cannot transfer tokens to yourself!",
+    "valueyourlife:transfer-success": "Transferred {0} tokens to {1}. Your tokens: {2}",
+    "valueyourlife:transfer-received": "{0} transferred {1} tokens to you. Your tokens: {2}",
+    "valueyourlife:transfer-insufficient": "Not enough tokens! You have {0}",
+    "valueyourlife:transfer-success-offline": "Transferred {0} tokens to offline player {1}. Your tokens: {2}",
+    "valueyourlife:transfer-success-new": "Transferred {0} tokens to {1} (new player). Your tokens: {2}",
+    "valueyourlife:token-balance": "Your respawn tokens: {0}",
+    "valueyourlife:give-success": "Gave {0} tokens to {1}. New total: {2}",
+    "valueyourlife:reset-success": "Reset {0}'s tokens to 0",
+    "valueyourlife:player-not-found": "Player {0} not found",
+    "valueyourlife:skills-reset": "You ran out of respawn tokens! All XSkills have been reset."
+}

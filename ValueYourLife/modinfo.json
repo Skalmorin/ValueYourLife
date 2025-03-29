@@ -1,0 +1,13 @@
+{
+    "type": "code",
+    "modid": "valueyourlife",
+    "name": "Value Your Life",
+    "authors": [
+        "Skalmorin", "Grok 3"
+    ],
+    "description": "Death is a costly adventure.",
+    "version": "1.0.0",
+    "dependencies": {
+        "game": ""
+    }
+}

@@ -1,0 +1,33 @@
+C:\Users\Marshall\Desktop\ValueYourLife\ValueYourLife\ValueYourLife\bin\Debug\Mods\mod\assets\valueyourlife\lang\en.json
+C:\Users\Marshall\Desktop\ValueYourLife\ValueYourLife\ValueYourLife\bin\Debug\Mods\mod\modinfo.json
+C:\Users\Marshall\Desktop\ValueYourLife\ValueYourLife\ValueYourLife\bin\Debug\Mods\mod\ValueYourLife.deps.json
+C:\Users\Marshall\Desktop\ValueYourLife\ValueYourLife\ValueYourLife\bin\Debug\Mods\mod\ValueYourLife.dll
+C:\Users\Marshall\Desktop\ValueYourLife\ValueYourLife\ValueYourLife\bin\Debug\Mods\mod\ValueYourLife.pdb
+C:\Users\Marshall\Desktop\ValueYourLife\ValueYourLife\ValueYourLife\bin\Debug\Mods\mod\xlib.dll
+C:\Users\Marshall\Desktop\ValueYourLife\ValueYourLife\ValueYourLife\bin\Debug\Mods\mod\xskills.dll
+C:\Users\Marshall\Desktop\ValueYourLife\ValueYourLife\ValueYourLife\obj\Debug\ValueYourLife.csproj.AssemblyReference.cache
+C:\Users\Marshall\Desktop\ValueYourLife\ValueYourLife\ValueYourLife\obj\Debug\ValueYourLife.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Marshall\Desktop\ValueYourLife\ValueYourLife\ValueYourLife\obj\Debug\ValueYourLife.AssemblyInfoInputs.cache
+C:\Users\Marshall\Desktop\ValueYourLife\ValueYourLife\ValueYourLife\obj\Debug\ValueYourLife.AssemblyInfo.cs
+C:\Users\Marshall\Desktop\ValueYourLife\ValueYourLife\ValueYourLife\obj\Debug\ValueYourLife.csproj.CoreCompileInputs.cache
+C:\Users\Marshall\Desktop\ValueYourLife\ValueYourLife\ValueYourLife\obj\Debug\ValueYourLife.sourcelink.json
+C:\Users\Marshall\Desktop\ValueYourLife\ValueYourLife\ValueYourLife\obj\Debug\ValueYou.F526C42C.Up2Date
+C:\Users\Marshall\Desktop\ValueYourLife\ValueYourLife\ValueYourLife\obj\Debug\ValueYourLife.dll
+C:\Users\Marshall\Desktop\ValueYourLife\ValueYourLife\ValueYourLife\obj\Debug\refint\ValueYourLife.dll
+C:\Users\Marshall\Desktop\ValueYourLife\ValueYourLife\ValueYourLife\obj\Debug\ValueYourLife.pdb
+C:\Users\Marshall\Desktop\ValueYourLife\ValueYourLife\ValueYourLife\obj\Debug\ref\ValueYourLife.dll
+C:\Users\Marshall\Desktop\Desktop Clean\ValueYourLife\ValueYourLife\ValueYourLife\bin\Debug\Mods\mod\assets\valueyourlife\lang\en.json
+C:\Users\Marshall\Desktop\Desktop Clean\ValueYourLife\ValueYourLife\ValueYourLife\bin\Debug\Mods\mod\modinfo.json
+C:\Users\Marshall\Desktop\Desktop Clean\ValueYourLife\ValueYourLife\ValueYourLife\bin\Debug\Mods\mod\ValueYourLife.deps.json
+C:\Users\Marshall\Desktop\Desktop Clean\ValueYourLife\ValueYourLife\ValueYourLife\bin\Debug\Mods\mod\ValueYourLife.dll
+C:\Users\Marshall\Desktop\Desktop Clean\ValueYourLife\ValueYourLife\ValueYourLife\bin\Debug\Mods\mod\ValueYourLife.pdb
+C:\Users\Marshall\Desktop\Desktop Clean\ValueYourLife\ValueYourLife\ValueYourLife\obj\Debug\ValueYourLife.csproj.AssemblyReference.cache
+C:\Users\Marshall\Desktop\Desktop Clean\ValueYourLife\ValueYourLife\ValueYourLife\obj\Debug\ValueYourLife.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Marshall\Desktop\Desktop Clean\ValueYourLife\ValueYourLife\ValueYourLife\obj\Debug\ValueYourLife.AssemblyInfoInputs.cache
+C:\Users\Marshall\Desktop\Desktop Clean\ValueYourLife\ValueYourLife\ValueYourLife\obj\Debug\ValueYourLife.AssemblyInfo.cs
+C:\Users\Marshall\Desktop\Desktop Clean\ValueYourLife\ValueYourLife\ValueYourLife\obj\Debug\ValueYourLife.csproj.CoreCompileInputs.cache
+C:\Users\Marshall\Desktop\Desktop Clean\ValueYourLife\ValueYourLife\ValueYourLife\obj\Debug\ValueYourLife.sourcelink.json
+C:\Users\Marshall\Desktop\Desktop Clean\ValueYourLife\ValueYourLife\ValueYourLife\obj\Debug\ValueYourLife.dll
+C:\Users\Marshall\Desktop\Desktop Clean\ValueYourLife\ValueYourLife\ValueYourLife\obj\Debug\refint\ValueYourLife.dll
+C:\Users\Marshall\Desktop\Desktop Clean\ValueYourLife\ValueYourLife\ValueYourLife\obj\Debug\ValueYourLife.pdb
+C:\Users\Marshall\Desktop\Desktop Clean\ValueYourLife\ValueYourLife\ValueYourLife\obj\Debug\ref\ValueYourLife.dll

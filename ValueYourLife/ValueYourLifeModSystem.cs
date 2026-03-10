@@ -63,8 +63,10 @@ namespace ValueYourLife
     public class ValueYourLifeModSystem : ModSystem
     {
         private ICoreServerAPI sapi;
-        private VYLConfig config;
+        public VYLConfig config;
+        internal GuiDialogValueYourLife activeVylDialog;
         private Dictionary<string, PlayerBalanceData> playerTokens;
+
 
         public override void Start(ICoreAPI api)
         {
@@ -73,26 +75,28 @@ namespace ValueYourLife
 
         public override void StartServerSide(ICoreServerAPI api)
         {
+            sapi = api;  // Make sure sapi is set (needed for logging and SaveAllData)
+
             config = api.LoadModConfig<VYLConfig>("valueyourlife.json") ?? new VYLConfig();
             api.StoreModConfig(config, "valueyourlife.json");
 
-            // === 100% WORKING PER-WORLD TOKEN STORAGE ===
+            sapi.Logger.Notification("[VYL] === SERVER STARTING ===");
+
+            // === TOKEN STORAGE ===
             byte[] data = api.WorldManager.SaveGame.GetData("vyl_player_tokens");
             if (data != null && data.Length > 0)
             {
                 playerTokens = SerializerUtil.Deserialize<Dictionary<string, PlayerBalanceData>>(data);
+                sapi.Logger.Notification($"[VYL] Loaded {playerTokens.Count} player token entries");
             }
             else
             {
                 playerTokens = new Dictionary<string, PlayerBalanceData>();
+                sapi.Logger.Notification("[VYL] No existing token data - starting fresh");
             }
 
-            // Save tokens every time the world saves
-            api.Event.GameWorldSave += () =>
-            {
-                byte[] bytes = SerializerUtil.Serialize<Dictionary<string, PlayerBalanceData>>(playerTokens);
-                api.WorldManager.SaveGame.StoreData("vyl_player_tokens", bytes);
-            };
+            // Save both every world save
+            api.Event.GameWorldSave += () => SaveAllData();
 
             // === EVENT HOOKS ===
             sapi.Event.PlayerDeath += OnPlayerDeath;
@@ -100,7 +104,7 @@ namespace ValueYourLife
             sapi.Event.PlayerNowPlaying += OnPlayerNowPlaying;
             sapi.Event.PlayerDisconnect += OnPlayerDisconnect;
 
-            // === CHAT COMMANDS ===
+            // === FULL CHAT COMMAND REGISTRATION (restored exactly) ===
             sapi.ChatCommands.Create("vyl")
                 .WithDescription("Manage your ValueYourLife respawn tokens")
                 .RequiresPrivilege("chat")
@@ -172,18 +176,77 @@ namespace ValueYourLife
             {
                 if (capi.World == null) return true;
 
-                var player = capi.World.Player;
-                int tokens = player.Entity.WatchedAttributes.GetInt("vylTokenCount", 0);
+                OpenValueYourLifeDialog(capi);   // ← now uses the shared method
 
-                // Get grace status
-                long lastRespawn = player.Entity.WatchedAttributes.GetLong("vylLastRespawn", 0);
-                long now = capi.World.ElapsedMilliseconds;
-                bool inGrace = lastRespawn > 0 && (now - lastRespawn) < config.GracePeriodSeconds * 1000L;
-                string graceText = inGrace ? $"Grace active: {(config.GracePeriodSeconds - (now - lastRespawn) / 1000)}s left" : "No grace active";
-
-                new GuiDialogTokenUI(capi, tokens, config.RustyGearCost, config.TemporalGearCost, graceText).TryOpen();
                 return true;
             });
+        }
+
+        public int GetGearCount(ICoreClientAPI capi, string code)
+        {
+            var item = capi.World.GetItem(new AssetLocation(code));
+            if (item == null) return 0;
+
+            int count = 0;
+            var player = capi.World.Player;
+
+            // Hotbar
+            var hotbar = player.InventoryManager.GetHotbarInventory();
+            foreach (var slot in hotbar)
+            {
+                if (slot.Itemstack?.Item == item)
+                    count += slot.Itemstack.StackSize;
+            }
+
+            // Backpack
+            var backpack = player.InventoryManager.GetOwnInventory(GlobalConstants.backpackInvClassName);
+            if (backpack != null)
+            {
+                foreach (var slot in backpack)
+                {
+                    if (slot.Itemstack?.Item == item)
+                        count += slot.Itemstack.StackSize;
+                }
+            }
+
+            return count;
+        }
+
+        public void OpenValueYourLifeDialog(ICoreClientAPI capi)
+        {
+            if (capi.World == null) return;
+
+            // Close any existing dialog first (prevents ghost window + stacking)
+            if (activeVylDialog != null && activeVylDialog.IsOpened())
+            {
+                activeVylDialog.TryClose();
+            }
+
+            var player = capi.World.Player;
+            int tokens = player.Entity.WatchedAttributes.GetInt("vylTokenCount", 0);
+
+            int rustyCount = GetGearCount(capi, "gear-rusty");
+            int temporalCount = GetGearCount(capi, "gear-temporal");
+
+            // Grace status
+            long lastRespawn = player.Entity.WatchedAttributes.GetLong("vylLastRespawn", 0);
+            long now = capi.World.ElapsedMilliseconds;
+            bool inGrace = lastRespawn > 0 && (now - lastRespawn) < config.GracePeriodSeconds * 1000L;
+            string graceText = inGrace
+                ? $"Grace active: {(config.GracePeriodSeconds - (now - lastRespawn) / 1000)}s left"
+                : "No grace active";
+
+            activeVylDialog = new GuiDialogValueYourLife(
+                capi,
+                tokens,
+                config.RustyGearCost,
+                config.TemporalGearCost,
+                rustyCount,
+                temporalCount,
+                graceText
+            );
+
+            activeVylDialog.TryOpen();
         }
 
         private void OnPlayerDeath(IServerPlayer player, DamageSource damageSource)
@@ -240,50 +303,73 @@ namespace ValueYourLife
         private void OnPlayerNowPlaying(IServerPlayer player)
         {
             string uid = player.PlayerUID;
+            string lowerName = player.PlayerName.ToLowerInvariant();
+            string pendingKey = "pending_" + lowerName;
 
-            if (!playerTokens.TryGetValue(uid, out var data))
+            // Apply any pending offline transfer
+            if (playerTokens.TryGetValue(pendingKey, out var pendingData))
             {
-                data = new PlayerBalanceData { PlayerName = player.PlayerName, Tokens = config.StartingTokens };
-                playerTokens[uid] = data;
+                if (!playerTokens.TryGetValue(uid, out var data))
+                {
+                    data = new PlayerBalanceData { PlayerName = player.PlayerName, Tokens = config.StartingTokens };
+                    playerTokens[uid] = data;
+                }
+                else
+                {
+                    data.PlayerName = player.PlayerName;
+                }
+
+                data.Tokens += pendingData.Tokens;
+                playerTokens.Remove(pendingKey);
+
+                SaveAllData();
+
+                sapi.SendMessage(player, 0,
+                    $"<font color=\"#00ff00\"><strong>You received {pendingData.Tokens} respawn token{(pendingData.Tokens == 1 ? "" : "s")} while offline!</strong></font>",
+                    EnumChatType.Notification);
+            }
+
+            // === Your original code continues here (unchanged) ===
+            if (!playerTokens.TryGetValue(uid, out var data2))
+            {
+                data2 = new PlayerBalanceData { PlayerName = player.PlayerName, Tokens = config.StartingTokens };
+                playerTokens[uid] = data2;
                 SaveTokens();
             }
             else
             {
-                data.PlayerName = player.PlayerName;
+                data2.PlayerName = player.PlayerName;
             }
 
-            player.Entity.WatchedAttributes.SetInt("vylTokenCount", data.Tokens);
-
+            player.Entity.WatchedAttributes.SetInt("vylTokenCount", data2.Tokens);
             var tokenTree = player.Entity.WatchedAttributes.GetTreeAttribute("vylTokens");
             if (tokenTree == null)
             {
                 tokenTree = new TreeAttribute();
                 player.Entity.WatchedAttributes.SetAttribute("vylTokens", tokenTree);
             }
-            tokenTree.SetInt("count", data.Tokens);
+            tokenTree.SetInt("count", data2.Tokens);
             player.Entity.WatchedAttributes.MarkPathDirty("vylTokens");
+            player.Entity.WatchedAttributes.SetBool("vylCanRespawn", data2.Tokens >= 1);
 
-            player.Entity.WatchedAttributes.SetBool("vylCanRespawn", data.Tokens >= 1);
-
-            // Force grace period OFF on first join
+            // Force grace period OFF
             player.Entity.WatchedAttributes.RemoveAttribute("vylLastRespawn");
             player.Entity.WatchedAttributes.SetLong("vylLastRespawn", 0);
             player.Entity.WatchedAttributes.MarkPathDirty("vylLastRespawn");
 
-            // Optional: attach grace behavior (if you still use it for messages)
             if (!player.Entity.HasBehavior<EntityBehaviorVYLGrace>())
             {
                 player.Entity.AddBehavior(new EntityBehaviorVYLGrace(player.Entity, sapi, config));
             }
-            string color = data.Tokens switch
+
+            string color = data2.Tokens switch
             {
                 0 => "#ff4444",
                 <= 3 => "#ffaa00",
                 _ => "#ffffff"
             };
-
             sapi.SendMessage(player, 0,
-                $"<font color=\"{color}\"><strong>You have {data.Tokens} respawn token{(data.Tokens == 1 ? "" : "s")} remaining.</strong></font>",
+                $"<font color=\"{color}\"><strong>You have {data2.Tokens} respawn token{(data2.Tokens == 1 ? "" : "s")} remaining.</strong></font>",
                 EnumChatType.Notification);
         }
 
@@ -801,7 +887,7 @@ namespace ValueYourLife
         private TextCommandResult OnTransferCommand(TextCommandCallingArgs args)
         {
             var sender = args.Caller.Player as IServerPlayer;
-            string targetPlayerName = (string)args[0];
+            string targetPlayerName = ((string)args[0]).Trim();
             int quantity = (int)args[1];
 
             if (quantity <= 0) return TextCommandResult.Error("Quantity must be positive!");
@@ -812,42 +898,42 @@ namespace ValueYourLife
             if (quantity > senderTokens)
                 return TextCommandResult.Error(Lang.Get("valueyourlife:transfer-insufficient", senderTokens));
 
-            var targetPlayer = Array.Find(sapi.Server.Players, p => p?.PlayerName?.Equals(targetPlayerName, StringComparison.OrdinalIgnoreCase) == true);
-            if (targetPlayer != null) // Online
-            {
-                senderTokens -= quantity;
-                int targetTokens = playerTokens[targetPlayer.PlayerUID].Tokens + quantity;
-                playerTokens[sender.PlayerUID].Tokens = senderTokens;
-                playerTokens[targetPlayer.PlayerUID].Tokens = targetTokens;
-                sender.Entity.WatchedAttributes.SetInt("vylTokenCount", senderTokens);
-                targetPlayer.Entity.WatchedAttributes.SetInt("vylTokenCount", targetTokens);
-                SaveTokens();
-
-                sapi.SendMessage(sender, 0, Lang.Get("valueyourlife:transfer-success", quantity, targetPlayerName, senderTokens), EnumChatType.Notification);
-                sapi.SendMessage(targetPlayer, 0, Lang.Get("valueyourlife:transfer-received", sender.PlayerName, quantity, targetTokens), EnumChatType.Notification);
-                return TextCommandResult.Success();
-            }
-
-            // Offline or unknown
-            string targetUid = playerTokens.FirstOrDefault(e => e.Value.PlayerName.Equals(targetPlayerName, StringComparison.OrdinalIgnoreCase)).Key;
-            if (targetUid != null)
-            {
-                senderTokens -= quantity;
-                playerTokens[sender.PlayerUID].Tokens = senderTokens;
-                playerTokens[targetUid].Tokens += quantity;
-                sender.Entity.WatchedAttributes.SetInt("vylTokenCount", senderTokens);
-                SaveTokens();
-                return TextCommandResult.Success(Lang.Get("valueyourlife:transfer-success-offline", quantity, targetPlayerName, senderTokens));
-            }
-
-            var offlinePlayer = Array.Find(sapi.World.AllPlayers, p => p?.PlayerName?.Equals(targetPlayerName, StringComparison.OrdinalIgnoreCase) == true);
-            targetUid = offlinePlayer?.PlayerUID ?? "pending_" + targetPlayerName.ToLowerInvariant();
             senderTokens -= quantity;
             playerTokens[sender.PlayerUID].Tokens = senderTokens;
-            playerTokens[targetUid] = new PlayerBalanceData { PlayerName = targetPlayerName, Tokens = quantity };
             sender.Entity.WatchedAttributes.SetInt("vylTokenCount", senderTokens);
-            SaveTokens();
-            return TextCommandResult.Success(Lang.Get(offlinePlayer != null ? "valueyourlife:transfer-success-offline" : "valueyourlife:transfer-success-new", quantity, targetPlayerName, senderTokens));
+
+            string lowerTarget = targetPlayerName.ToLowerInvariant();
+            string pendingKey = "pending_" + lowerTarget;
+
+            // Check if target already has an entry (online or previously seen)
+            var targetEntry = playerTokens.FirstOrDefault(e =>
+                e.Value.PlayerName.Equals(targetPlayerName, StringComparison.OrdinalIgnoreCase));
+
+            if (!string.IsNullOrEmpty(targetEntry.Key))
+            {
+                playerTokens[targetEntry.Key].Tokens += quantity;
+
+                var targetPlayer = sapi.Server.Players.FirstOrDefault(p => p?.PlayerUID == targetEntry.Key) as IServerPlayer;
+                if (targetPlayer != null)
+                {
+                    targetPlayer.Entity.WatchedAttributes.SetInt("vylTokenCount", playerTokens[targetEntry.Key].Tokens);
+                    sapi.SendMessage(targetPlayer, 0, Lang.Get("valueyourlife:transfer-received", sender.PlayerName, quantity, playerTokens[targetEntry.Key].Tokens), EnumChatType.Notification);
+                }
+
+                SaveAllData();
+                sapi.SendMessage(sender, 0, Lang.Get("valueyourlife:transfer-success", quantity, targetPlayerName, senderTokens), EnumChatType.Notification);
+                return TextCommandResult.Success();
+            }
+            else
+            {
+                // Store as pending (will be applied on first login)
+                playerTokens[pendingKey] = new PlayerBalanceData { PlayerName = targetPlayerName, Tokens = quantity };
+
+                SaveAllData();
+
+                sapi.SendMessage(sender, 0, Lang.Get("valueyourlife:transfer-success-offline", quantity, targetPlayerName, senderTokens), EnumChatType.Notification);
+                return TextCommandResult.Success();
+            }
         }
 
         private TextCommandResult OnBalanceCommand(TextCommandCallingArgs args)
@@ -972,6 +1058,12 @@ namespace ValueYourLife
             SaveTokens();
             return TextCommandResult.Success(Lang.Get("valueyourlife:reset-success", targetPlayerName));
         }
+
+        private void SaveAllData()
+        {
+            byte[] bytes = SerializerUtil.Serialize<Dictionary<string, PlayerBalanceData>>(playerTokens);
+            sapi.WorldManager.SaveGame.StoreData("vyl_player_tokens", bytes);
+        }
     }
 
     // NEW: Inline EntityBehavior class (lives in the namespace)
@@ -1036,48 +1128,134 @@ namespace ValueYourLife
         public override void OnEntityDespawn(EntityDespawnData despawn) { }
     }
 
-    public class GuiDialogTokenUI : GuiDialog
-    {
-        public GuiDialogTokenUI(ICoreClientAPI capi, int tokens, int rustyCost, int temporalCost, string graceText) : base(capi)
-        {
-            // Dialog bounds (unchanged)
-            ElementBounds dialogBounds = ElementStdBounds.AutosizedMainDialog.WithAlignment(EnumDialogArea.CenterMiddle);
 
-            // Background (unchanged)
+    public class GuiDialogValueYourLife : GuiDialog
+    {
+        private ICoreClientAPI capi;
+
+        public GuiDialogValueYourLife(ICoreClientAPI capi, int tokens, int rustyCost, int temporalCost, int rustyCount, int temporalCount, string graceText) : base(capi)
+        {
+            this.capi = capi;
+            this.tokens = tokens;
+            this.rustyCost = rustyCost;
+            this.temporalCost = temporalCost;
+            this.rustyCount = rustyCount;
+            this.temporalCount = temporalCount;
+            this.graceText = graceText;
+            ComposeDialog();
+        }
+
+        private int tokens, rustyCost, temporalCost, rustyCount, temporalCount;
+        private string graceText;
+
+        private void ComposeDialog()
+        {
+            ElementBounds dialogBounds = ElementStdBounds.AutosizedMainDialog
+                .WithAlignment(EnumDialogArea.CenterMiddle)
+                .WithFixedSize(430, 520);
+
             ElementBounds bgBounds = ElementBounds.Fill.WithFixedPadding(GuiStyle.ElementToDialogPadding);
             bgBounds.BothSizing = ElementSizing.FitToChildren;
 
-            // Title bounds (down 10px, left 5px)
-            ElementBounds titleBounds = ElementBounds.Fixed(5, 25, 300, 30);
+            var titleFont = CairoFont.WhiteMediumText();
+            var normalFont = CairoFont.WhiteSmallText();
+            var buttonFont = CairoFont.WhiteSmallText().WithFontSize(20);
 
-            // Token bounds (down 10px, left 5px, plain for now)
-            ElementBounds tokenBounds = ElementBounds.Fixed(5, 65, 300, 30);
-            string tokenText = $"Tokens remaining: {tokens}";
+            ElementBounds titleBounds = ElementBounds.Fixed(0, 25, 430, 40).WithAlignment(EnumDialogArea.CenterTop);
+            ElementBounds tokenBounds = ElementBounds.Fixed(30, 72, 370, 30);
+            ElementBounds rustyBounds = ElementBounds.Fixed(30, 102, 370, 25);
+            ElementBounds temporalBounds = ElementBounds.Fixed(30, 127, 370, 25);
+            ElementBounds graceBounds = ElementBounds.Fixed(30, 155, 370, 25);
 
-            // Grace bounds (down 10px, left 5px)
-            ElementBounds graceBounds = ElementBounds.Fixed(5, 100, 300, 30);
+            ElementBounds buy1Bounds = ElementBounds.Fixed(0, 190, 210, 30);
+            ElementBounds trade1Bounds = ElementBounds.Fixed(0, 225, 210, 30);
+            ElementBounds buyAllBounds = ElementBounds.Fixed(220, 190, 210, 30);
+            ElementBounds tradeAllBounds = ElementBounds.Fixed(220, 225, 210, 30);
 
-            // Cost bounds (down 10px, left 5px)
-            ElementBounds costBounds = ElementBounds.Fixed(5, 135, 300, 60);
-            string costText = $"Buy: {rustyCost} rusty gears (/vyl buy)\nTrade: {temporalCost} temporal gears (/vyl trade)";
+            // Transfer section
+            ElementBounds recipientLabelBounds = ElementBounds.Fixed(30, 275, 150, 25);
+            ElementBounds recipientInputBounds = ElementBounds.Fixed(180, 272, 220, 30);
+            ElementBounds amountLabelBounds = ElementBounds.Fixed(30, 315, 150, 25);
+            ElementBounds amountInputBounds = ElementBounds.Fixed(180, 312, 80, 30);
+            ElementBounds transferButtonBounds = ElementBounds.Fixed(270, 312, 130, 30);
 
-            // Close button bounds (wider square 40x40, top-right)
-            ElementBounds closeBounds = ElementBounds.Fixed(250, 170, 40, 40);
+            ElementBounds closeBounds = ElementBounds.Fixed(395, 15, 30, 30);
 
-            // Compose the dialog
             SingleComposer = capi.Gui.CreateCompo("vyltokenui", dialogBounds)
-                .AddShadedDialogBG(bgBounds, true, 5.0, 0.75f)
+                .AddShadedDialogBG(bgBounds, true)
                 .BeginChildElements(bgBounds)
-                    .AddStaticText("Value Your Life - Tokens", CairoFont.WhiteSmallText(), titleBounds)
-                    .AddStaticText(tokenText, CairoFont.WhiteSmallText(), tokenBounds)
-                    .AddStaticText(graceText, CairoFont.WhiteSmallText(), graceBounds)
-                    .AddStaticText(costText, CairoFont.WhiteSmallText(), costBounds)
+                    .AddStaticText("Value Your Life", titleFont, titleBounds)
+                    .AddStaticText($"Tokens remaining: {tokens}", normalFont, tokenBounds)
+                    .AddStaticText($"Rusty Gears: {rustyCount}", normalFont, rustyBounds)
+                    .AddStaticText($"Temporal Gears: {temporalCount}", normalFont, temporalBounds)
+                    .AddStaticText(graceText, normalFont, graceBounds)
+
+                    .AddButton($" Buy 1 (-{rustyCost} Rusty) ", OnBuyOne, buy1Bounds, buttonFont)
+                    .AddButton($" Trade 1 (-{temporalCost} Temporal) ", OnTradeOne, trade1Bounds, buttonFont)
+                    .AddButton(" Buy All Possible ", OnBuyAll, buyAllBounds, buttonFont)
+                    .AddButton(" Trade All Possible ", OnTradeAll, tradeAllBounds, buttonFont)
+
+                    // Transfer section
+                    .AddStaticText("Recipient name:", normalFont, recipientLabelBounds)
+                    .AddTextInput(recipientInputBounds, _ => { }, buttonFont, "vyl-recipient")
+                    .AddStaticText("Amount:", normalFont, amountLabelBounds)
+                    .AddNumberInput(amountInputBounds, _ => { }, buttonFont, "vyl-amount")
+                    .AddButton(" Transfer ", OnTransfer, transferButtonBounds, buttonFont)
+
                     .AddButton("X", () => TryClose(), closeBounds)
                 .EndChildElements()
                 .Compose();
         }
 
+        private bool OnBuyOne() { capi.SendChatMessage("/vyl buy 1"); Refresh(); return true; }
+        private bool OnTradeOne() { capi.SendChatMessage("/vyl trade 1"); Refresh(); return true; }
+        private bool OnBuyAll() { capi.SendChatMessage("/vyl buyall"); Refresh(); return true; }
+        private bool OnTradeAll() { capi.SendChatMessage("/vyl tradeall"); Refresh(); return true; }
+
+        private bool OnTransfer()
+        {
+            var nameInput = SingleComposer.GetTextInput("vyl-recipient");
+            var amountInput = SingleComposer.GetNumberInput("vyl-amount");
+
+            string recipient = nameInput.GetText().Trim();
+            string amountStr = amountInput.GetText();
+
+            if (string.IsNullOrEmpty(recipient))
+            {
+                capi.TriggerChatMessage("Please enter a recipient name.");
+                return true;
+            }
+
+            if (!int.TryParse(amountStr, out int amount) || amount < 1)
+            {
+                capi.TriggerChatMessage("Please enter a valid amount (1 or more).");
+                return true;
+            }
+
+            capi.SendChatMessage($"/vyl transfer {recipient} {amount}");
+
+            // Clear fields
+            nameInput.SetValue("");
+            amountInput.SetValue("1");
+
+            Refresh();   // auto-refresh numbers
+            return true;
+        }
+
+        private void Refresh()
+        {
+            capi.Event.RegisterCallback(_ => ReopenWithFreshData(), 80);
+        }
+
+        private void ReopenWithFreshData()
+        {
+            if (IsOpened()) TryClose();
+            var mod = capi.ModLoader.GetModSystem<ValueYourLifeModSystem>();
+            mod.OpenValueYourLifeDialog(capi);
+        }
+
         public override string ToggleKeyCombinationCode => "vyl-ui";
     }
+
 
 }

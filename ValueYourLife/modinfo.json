@@ -3,10 +3,10 @@
     "modid": "valueyourlife",
     "name": "Value Your Life",
     "authors": [
-        "Skalmorin", "Grok 3"
+        "Skalmorin", "Grok 4.2"
     ],
     "description": "Death is a costly adventure.",
-    "version": "2.0.0",
+    "version": "2.3.0",
     "dependencies": {
         "game": ""
     }

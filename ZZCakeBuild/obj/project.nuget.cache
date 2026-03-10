@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "ja87VQX3tUo=",
+  "dgSpecHash": "NSG5p9aFShM=",
   "success": true,
-  "projectFilePath": "C:\\Users\\Marshall\\Desktop\\Desktop Clean\\ValueYourLife\\ValueYourLife\\ZZCakeBuild\\CakeBuild.csproj",
+  "projectFilePath": "C:\\Users\\Marshall\\Desktop\\ValueYourLife\\ValueYourLife\\ZZCakeBuild\\CakeBuild.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Marshall\\.nuget\\packages\\autofac\\6.4.0\\autofac.6.4.0.nupkg.sha512",
     "C:\\Users\\Marshall\\.nuget\\packages\\cake.cli\\3.0.0\\cake.cli.3.0.0.nupkg.sha512",
@@ -12,11 +12,8 @@
     "C:\\Users\\Marshall\\.nuget\\packages\\cake.frosting\\3.0.0\\cake.frosting.3.0.0.nupkg.sha512",
     "C:\\Users\\Marshall\\.nuget\\packages\\cake.json\\7.0.1\\cake.json.7.0.1.nupkg.sha512",
     "C:\\Users\\Marshall\\.nuget\\packages\\cake.nuget\\3.0.0\\cake.nuget.3.0.0.nupkg.sha512",
-    "C:\\Users\\Marshall\\.nuget\\packages\\microsoft.csharp\\4.7.0\\microsoft.csharp.4.7.0.nupkg.sha512",
     "C:\\Users\\Marshall\\.nuget\\packages\\microsoft.extensions.dependencyinjection\\7.0.0\\microsoft.extensions.dependencyinjection.7.0.0.nupkg.sha512",
     "C:\\Users\\Marshall\\.nuget\\packages\\microsoft.extensions.dependencyinjection.abstractions\\7.0.0\\microsoft.extensions.dependencyinjection.abstractions.7.0.0.nupkg.sha512",
-    "C:\\Users\\Marshall\\.nuget\\packages\\microsoft.netcore.platforms\\5.0.0\\microsoft.netcore.platforms.5.0.0.nupkg.sha512",
-    "C:\\Users\\Marshall\\.nuget\\packages\\microsoft.win32.registry\\5.0.0\\microsoft.win32.registry.5.0.0.nupkg.sha512",
     "C:\\Users\\Marshall\\.nuget\\packages\\newtonsoft.json\\13.0.3\\newtonsoft.json.13.0.3.nupkg.sha512",
     "C:\\Users\\Marshall\\.nuget\\packages\\nuget.common\\6.3.1\\nuget.common.6.3.1.nupkg.sha512",
     "C:\\Users\\Marshall\\.nuget\\packages\\nuget.configuration\\6.3.1\\nuget.configuration.6.3.1.nupkg.sha512",
@@ -27,14 +24,45 @@
     "C:\\Users\\Marshall\\.nuget\\packages\\nuget.versioning\\6.3.1\\nuget.versioning.6.3.1.nupkg.sha512",
     "C:\\Users\\Marshall\\.nuget\\packages\\spectre.console\\0.45.0\\spectre.console.0.45.0.nupkg.sha512",
     "C:\\Users\\Marshall\\.nuget\\packages\\spectre.console.cli\\0.45.0\\spectre.console.cli.0.45.0.nupkg.sha512",
-    "C:\\Users\\Marshall\\.nuget\\packages\\system.diagnostics.diagnosticsource\\4.7.1\\system.diagnostics.diagnosticsource.4.7.1.nupkg.sha512",
-    "C:\\Users\\Marshall\\.nuget\\packages\\system.formats.asn1\\5.0.0\\system.formats.asn1.5.0.0.nupkg.sha512",
-    "C:\\Users\\Marshall\\.nuget\\packages\\system.memory\\4.5.5\\system.memory.4.5.5.nupkg.sha512",
-    "C:\\Users\\Marshall\\.nuget\\packages\\system.security.accesscontrol\\5.0.0\\system.security.accesscontrol.5.0.0.nupkg.sha512",
-    "C:\\Users\\Marshall\\.nuget\\packages\\system.security.cryptography.cng\\5.0.0\\system.security.cryptography.cng.5.0.0.nupkg.sha512",
     "C:\\Users\\Marshall\\.nuget\\packages\\system.security.cryptography.pkcs\\5.0.0\\system.security.cryptography.pkcs.5.0.0.nupkg.sha512",
-    "C:\\Users\\Marshall\\.nuget\\packages\\system.security.cryptography.protecteddata\\4.4.0\\system.security.cryptography.protecteddata.4.4.0.nupkg.sha512",
-    "C:\\Users\\Marshall\\.nuget\\packages\\system.security.principal.windows\\5.0.0\\system.security.principal.windows.5.0.0.nupkg.sha512"
+    "C:\\Users\\Marshall\\.nuget\\packages\\system.security.cryptography.protecteddata\\4.4.0\\system.security.cryptography.protecteddata.4.4.0.nupkg.sha512"
   ],
-  "logs": []
+  "logs": [
+    {
+      "code": "NU1903",
+      "level": "Warning",
+      "message": "Package 'NuGet.Common' 6.3.1 has a known high severity vulnerability, https://github.com/advisories/GHSA-6qmf-mmc7-6c2p",
+      "projectPath": "C:\\Users\\Marshall\\Desktop\\ValueYourLife\\ValueYourLife\\ZZCakeBuild\\CakeBuild.csproj",
+      "warningLevel": 1,
+      "filePath": "C:\\Users\\Marshall\\Desktop\\ValueYourLife\\ValueYourLife\\ZZCakeBuild\\CakeBuild.csproj",
+      "libraryId": "NuGet.Common",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1904",
+      "level": "Warning",
+      "message": "Package 'NuGet.Packaging' 6.3.1 has a known critical severity vulnerability, https://github.com/advisories/GHSA-68w7-72jg-6qpp",
+      "projectPath": "C:\\Users\\Marshall\\Desktop\\ValueYourLife\\ValueYourLife\\ZZCakeBuild\\CakeBuild.csproj",
+      "warningLevel": 1,
+      "filePath": "C:\\Users\\Marshall\\Desktop\\ValueYourLife\\ValueYourLife\\ZZCakeBuild\\CakeBuild.csproj",
+      "libraryId": "NuGet.Packaging",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1903",
+      "level": "Warning",
+      "message": "Package 'NuGet.Protocol' 6.3.1 has a known high severity vulnerability, https://github.com/advisories/GHSA-6qmf-mmc7-6c2p",
+      "projectPath": "C:\\Users\\Marshall\\Desktop\\ValueYourLife\\ValueYourLife\\ZZCakeBuild\\CakeBuild.csproj",
+      "warningLevel": 1,
+      "filePath": "C:\\Users\\Marshall\\Desktop\\ValueYourLife\\ValueYourLife\\ZZCakeBuild\\CakeBuild.csproj",
+      "libraryId": "NuGet.Protocol",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    }
+  ]
 }

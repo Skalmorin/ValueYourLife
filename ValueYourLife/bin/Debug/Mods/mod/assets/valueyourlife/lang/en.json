@@ -4,6 +4,7 @@
     "valueyourlife:respawn-failed-tokens": "Cannot respawn! Need 1 token, but you have {1}",
     "valueyourlife:buy-success": "Bought {0} respawn tokens for {1} rusty gears. Tokens: {2}",
     "valueyourlife:buy-failed": "Not enough gears! Need {0}, have {1}",
+    "valueyourlife:buyall-success": "Bought {1} respawn tokens for {0} rusty gears. Tokens: {2}",
     "valueyourlife:buyall-failed": "Not enough gears for even 1 token! Need {0}, have {1}",
     "valueyourlife:trade-success": "Traded {0} temporal gears for {1} respawn tokens. Tokens: {2}",
     "valueyourlife:trade-failed": "Not enough temporal gears! Need {0}, have {1}",
